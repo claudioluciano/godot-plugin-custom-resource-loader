@@ -11,15 +11,11 @@ namespace CustomResourceLoaderPlugin
 
         private RegEx _regex;
 
-        private Texture _icon;
-
         public override void _EnterTree()
         {
             var editorInterface = GetEditorInterface();
             var efs = editorInterface.GetResourceFilesystem();
             efs.Connect("filesystem_changed", this, "OnfilesystemChanged");
-
-            _icon = editorInterface.GetBaseControl().GetIcon("Node", "SpatialMaterial");
             _resourceNames = new List<string>();
 
             _regex = new RegEx();
@@ -33,15 +29,13 @@ namespace CustomResourceLoaderPlugin
             var dir = new Godot.Directory();
             foreach (string item in GetAllScripts(dir.GetCurrentDir()))
             {
-                // Initialization of the plugin goes here.
-                // Add the new type with a name, a parent type, a script and an icon.
                 var script = GD.Load<Script>(item);
                 var className = GetClassName(script.SourceCode);
-
-                if (!_resourceNames.Contains(className))
+                if (className != "" && !_resourceNames.Contains(className))
                 {
-                    _resourceNames.Add(className);
-                    AddCustomType($"{className} ({item.GetFile()})", "Resource", script, null);
+                    var type = $"{className} ({item.GetFile()})";
+                    _resourceNames.Add(type);
+                    AddCustomType(type, "Resource", script, null);
                 }
             }
         }
@@ -84,14 +78,13 @@ namespace CustomResourceLoaderPlugin
                 if (subpath.Empty())
                     break;
 
-                if (subpath.BeginsWith(".") || !subpath.EndsWith(".cs"))
+                if (subpath.BeginsWith(".") || (dir.FileExists(subpath) && !subpath.EndsWith(".cs")))
                     continue;
 
                 var subDirs = GetAllScripts(path.PlusFile(subpath));
 
                 dirs.AddRange(subDirs);
             }
-
             return dirs;
         }
 
